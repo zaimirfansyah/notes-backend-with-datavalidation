@@ -1,5 +1,5 @@
 const { nanoid } = require('nanoid');
-const NotFoundError = require('../exceptions/NotFoundError');
+const NotFoundError = require('../../exceptions/NotFoundError');
 
 class NotesService {
   constructor() {
