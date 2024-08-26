@@ -36,7 +36,7 @@ const ExportsValidator = require('./validator/exports');
 
 // uploads
 const uploads = require('./api/uploads');
-const StorageService = require('./service/storage/StorageService');
+const StorageService = require('./service/S3/StorageService');
 const UploadsValidator = require('./validator/uploads');
 
 const init = async () => {
@@ -45,7 +45,7 @@ const init = async () => {
   const authenticationsService = new AuthenticationsService();
   const collaborationsService = new CollaborationsService();
   const notesService = new NotesService(collaborationsService);
-  const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/images'));
+  const storageService = new StorageService();
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -136,7 +136,7 @@ const init = async () => {
     // mendapatkan konteks response dari request
     const { response } = request;
   
-    // penanganan client error secara internal.
+    // Penanganan client error secara internal
     if (response instanceof ClientError) {
       const newResponse = h.response({
         status: 'fail',
@@ -145,9 +145,21 @@ const init = async () => {
       newResponse.code(response.statusCode);
       return newResponse;
     }
-      
+  
+    // Penanganan untuk error 500 (server error)
+    if (response.isServer) {
+      const newResponse = h.response({
+        status: 'error',
+        message: 'Internal Server Error',
+        stack: response.stack, // Menambahkan stack trace untuk debugging
+      });
+      newResponse.code(500);
+      return newResponse;
+    }
+  
     return h.continue;
   });
+  
  
   await server.start();
   console.log(`Server berjalan pada ${server.info.uri}`);
